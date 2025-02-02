@@ -12,15 +12,17 @@ import (
 
 // GStreamerPipeline handles the GStreamer pipeline for audio mixing
 type GStreamerPipeline struct {
-	ctx      context.Context
-	log      *logrus.Logger
-	mutex    sync.RWMutex
-	pipeline *gst.Pipeline
-	tone     *gst.Element
-	mic      *gst.Element
-	mixer    *gst.Element
-	convert  *gst.Element
-	sink     *gst.Element
+	ctx       context.Context
+	log       *logrus.Logger
+	mutex     sync.RWMutex
+	pipeline  *gst.Pipeline
+	tone      *gst.Element
+	mic       *gst.Element
+	mixer     *gst.Element
+	convert   *gst.Element
+	sink      *gst.Element
+	micVolume *gst.Element
+	level     *gst.Element
 }
 
 // NewGStreamerPipeline creates a new GStreamer pipeline instance
@@ -48,6 +50,22 @@ func NewGStreamerPipeline(ctx context.Context, log *logrus.Logger) (*GStreamerPi
 		return nil, fmt.Errorf("failed to create microphone source: %v", err)
 	}
 
+	micVolume, err := gst.NewElement("volume")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create microphone volume: %v", err)
+	}
+	if err := micVolume.Set("volume", 1.0); err != nil {
+		return nil, fmt.Errorf("failed to set microphone volume: %v", err)
+	}
+
+	level, err := gst.NewElement("level")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create level element: %v", err)
+	}
+	if err := level.Set("interval", uint64(100000000)); err != nil { // 100ms interval
+		return nil, fmt.Errorf("failed to set level interval: %v", err)
+	}
+
 	mixer, err := gst.NewElement("audiomixer")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create audio mixer: %v", err)
@@ -64,14 +82,20 @@ func NewGStreamerPipeline(ctx context.Context, log *logrus.Logger) (*GStreamerPi
 	}
 
 	// Add elements to pipeline
-	pipeline.AddMany(tone, mic, mixer, convert, sink)
+	pipeline.AddMany(tone, mic, micVolume, level, mixer, convert, sink)
 
 	// Link elements
 	if err := tone.Link(mixer); err != nil {
 		return nil, fmt.Errorf("failed to link tone to mixer: %v", err)
 	}
-	if err := mic.Link(mixer); err != nil {
-		return nil, fmt.Errorf("failed to link mic to mixer: %v", err)
+	if err := mic.Link(micVolume); err != nil {
+		return nil, fmt.Errorf("failed to link mic to volume: %v", err)
+	}
+	if err := micVolume.Link(level); err != nil {
+		return nil, fmt.Errorf("failed to link volume to level: %v", err)
+	}
+	if err := level.Link(mixer); err != nil {
+		return nil, fmt.Errorf("failed to link level to mixer: %v", err)
 	}
 	if err := mixer.Link(convert); err != nil {
 		return nil, fmt.Errorf("failed to link mixer to converter: %v", err)
@@ -95,14 +119,16 @@ func NewGStreamerPipeline(ctx context.Context, log *logrus.Logger) (*GStreamerPi
 	})
 
 	return &GStreamerPipeline{
-		ctx:      ctx,
-		log:      log,
-		pipeline: pipeline,
-		tone:     tone,
-		mic:      mic,
-		mixer:    mixer,
-		convert:  convert,
-		sink:     sink,
+		ctx:       ctx,
+		log:       log,
+		pipeline:  pipeline,
+		tone:      tone,
+		mic:       mic,
+		mixer:     mixer,
+		convert:   convert,
+		sink:      sink,
+		micVolume: micVolume,
+		level:     level,
 	}, nil
 }
 
