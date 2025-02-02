@@ -16,23 +16,26 @@ func main() {
 	log := logrus.New()
 	log.SetLevel(logrus.InfoLevel)
 
+	// Configuration loading disabled for initial testing
+
 	// Create context with cancellation
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Initialize audio processor
+	// Initialize components
 	processor, err := audio.NewProcessor(ctx, log)
 	if err != nil {
 		log.Fatalf("Failed to initialize audio processor: %v", err)
 	}
 	defer processor.Close()
 
-	// Initialize pipeline
 	pipe, err := pipeline.NewGStreamerPipeline(ctx, log)
 	if err != nil {
 		log.Fatalf("Failed to initialize pipeline: %v", err)
 	}
 	defer pipe.Close()
+
+	// Visualizer disabled for initial testing
 
 	// Setup signal handling for graceful shutdown
 	sigCh := make(chan os.Signal, 1)
