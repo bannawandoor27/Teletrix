@@ -20,4 +20,9 @@ go.work
 # IDE specific files
 .idea/
 .vscode/
+*.swp
+
+# Project specific binaries
+teletrix
+
 .DS_Store
