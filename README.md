@@ -1,8 +1,8 @@
 # Teletrix 🎙️
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/teletrix)](https://goreportcard.com/report/github.com/teletrix)
+[![Go Report Card](https://goreportcard.com/badge/github.com/bannawandoor27/Teletrix)](https://goreportcard.com/report/github.com/bannawandoor27/Teletrix)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Go Version](https://img.shields.io/github/go-mod/go-version/teletrix/teletrix)](https://golang.org/)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/bannawandoor27/Teletrix)](https://golang.org/)
 
 Teletrix is a sophisticated real-time audio processing system built in Go, leveraging GStreamer for high-performance audio pipeline management. It provides seamless audio mixing capabilities with voice activity detection.
 
